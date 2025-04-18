@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven'
+    }
+
     environment {
         IMAGE_NAME = "mehdifk/devops_tp2"
         VERSION = "1.0.0"
