@@ -55,12 +55,15 @@ pipeline{
 			}
 		}
 
-		stage('Push') {
+        stage('Push') {
+            steps {
+                script {
+                    def imageName = "sahnounhoussem0501/devops_tp2"
+                    sh "docker push ${imageName}:latest"
+                }
+            }
+        }
 
-			steps {
-				sh 'docker push devops_tp2:latest'
-			}
-		}
 	}
 
 	post {
