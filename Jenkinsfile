@@ -1,21 +1,25 @@
-pipeline {
-    agent any
-    
-    environment {
-        DOCKER_IMAGE = "sahnounhoussem0501/devops_TP2"
-    }
+pipeline{
+
+	agent {label 'Docker'}
+
 
     tools {
         maven 'Maven'
     }
-    
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        
+
+	environment {
+		DOCKERHUB_CREDENTIALS=credentials('dockerhub')
+	}
+
+	stages {
+	    
+	    stage('gitclone') {
+
+			steps {
+				git 'https://github.com/SAHNOUN-HOUSSEM/sprint_boot_devops_tp2.git'
+			}
+		}
+
         stage('Build Application') {
             steps {
                 sh 'mvn clean package -DskipTests'
@@ -32,37 +36,36 @@ pipeline {
                 }
             }
         }
+
         
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t ${DOCKER_IMAGE}:0 ."
-                    sh "docker tag ${DOCKER_IMAGE}:0 ${DOCKER_IMAGE}:latest"
+                    sh "docker build -t devops_tp2:0 ."
+                    sh "docker tag devops_tp2:0 devops_tp2:latest"
                 }
             }
         } 
-        
-        stage('Push to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-credentials',
-                    passwordVariable: 'DOCKER_PASSWORD',
-                    usernameVariable: 'DOCKER_USERNAME'
-                )]) {
-                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD"
-                    sh "docker push ${DOCKER_IMAGE}:0"
-                    sh "docker push ${DOCKER_IMAGE}:latest"
-                    sh "docker logout"
-                }
-            }
-        }
-        
-        stage('Cleanup') {
-            steps {
-                cleanWs()
-                sh "docker rmi ${DOCKER_IMAGE}:0 || true"
-                sh "docker rmi ${DOCKER_IMAGE}:latest || true"
-            }
-        }
-    }
+
+		stage('Login') {
+
+			steps {
+				sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+			}
+		}
+
+		stage('Push') {
+
+			steps {
+				sh 'docker push devops_tp2:latest'
+			}
+		}
+	}
+
+	post {
+		always {
+			sh 'docker logout'
+		}
+	}
+
 }
