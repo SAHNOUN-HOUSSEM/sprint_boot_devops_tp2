@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven'
+    }
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('1') // Replace with your credentials ID
         IMAGE_NAME = "mehdifk/devops_tp2"
