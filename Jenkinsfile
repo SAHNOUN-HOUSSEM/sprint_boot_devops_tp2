@@ -30,7 +30,6 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent { label 'docker' }
             steps {
                 sh "docker build -t ${IMAGE_NAME}:${VERSION} ."
             }
