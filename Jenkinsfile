@@ -2,9 +2,8 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_HUB_CREDS = credentials('dockerhub-credentials')
-        DOCKER_IMAGE = "yourdockerhubusername/your-app-name"
-        DOCKER_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_HUB_CREDS = credentials('1')
+        DOCKER_IMAGE = "sahnounhoussem0501/your-app-name"
     }
 
     tools {
@@ -38,7 +37,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    docker.build("${DOCKER_IMAGE}:1")
                     // Also tag as latest
                     docker.build("${DOCKER_IMAGE}:latest")
                 }
@@ -52,7 +51,7 @@ pipeline {
                     sh "echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin"
                     
                     // Push both tags
-                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    sh "docker push ${DOCKER_IMAGE}:1"
                     sh "docker push ${DOCKER_IMAGE}:latest"
                     
                     // Logout for security
