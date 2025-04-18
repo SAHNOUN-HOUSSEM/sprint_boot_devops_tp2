@@ -6,37 +6,47 @@ pipeline {
     }
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('1') // Replace with your credentials ID
         IMAGE_NAME = "mehdifk/devops_tp2"
+        VERSION = "1.0.0"
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Clone repository') {
             steps {
-                git 'https://github.com/FkihMehdi/sprint_boot_devops_tp2.git'
+                checkout scm
             }
         }
 
         stage('Build with Maven') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh 'mvn test'
             }
         }
 
         stage('Build Docker Image') {
+            agent { label 'docker' }
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:0")
-                }
+                sh "docker build -t ${IMAGE_NAME}:${VERSION} ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', '1') {
-                        docker.image("${IMAGE_NAME}:0").push()
-                    }
+                withCredentials([usernamePassword(
+                    credentialsId: '1',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${IMAGE_NAME}:${VERSION}
+                    '''
                 }
             }
         }
