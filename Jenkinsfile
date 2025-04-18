@@ -1,71 +1,67 @@
 pipeline {
     agent any
-
-    tools {
-        maven 'Maven'
-    }
-
+    
     environment {
-        IMAGE_NAME = "mehdifk/devops_tp2"
-        VERSION = "1.0.0"
-        // Add Docker path to ensure it can be found
-        PATH = "/usr/local/bin:/usr/bin:/bin:${env.PATH}"
+        DOCKER_HUB_CREDS = credentials('1')
+        DOCKER_IMAGE = "sahnounhoussem0501/devops_tp2"
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
     }
-
+    
     stages {
-        stage('Clone repository') {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
-        stage('Build with Maven') {
+        
+        stage('Build Application') {
             steps {
-                sh 'mvn clean install'
+                sh 'mvn clean package -DskipTests'
             }
         }
-
+        
         stage('Run Tests') {
             steps {
                 sh 'mvn test'
             }
-        }
-
-        stage('Install Docker') {
-            steps {
-                // Check if Docker exists, if not try to install it
-                sh '''
-                    if ! command -v docker &> /dev/null; then
-                        echo "Docker not found. Attempting to install..."
-                        curl -fsSL https://get.docker.com -o get-docker.sh
-                        sh get-docker.sh
-                    else
-                        echo "Docker is already installed"
-                        docker --version
-                    fi
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t ${IMAGE_NAME}:${VERSION} ."
-            }
-        }
-
-        stage('Push to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: '1',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${VERSION}
-                    '''
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
+                    // Also tag as latest
+                    docker.build("${DOCKER_IMAGE}:latest")
+                }
+            }
+        }
+        
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    // Login to Docker Hub
+                    sh "echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin"
+                    
+                    // Push both tags
+                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    sh "docker push ${DOCKER_IMAGE}:latest"
+                    
+                    // Logout for security
+                    sh "docker logout"
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean up workspace
+            cleanWs()
         }
     }
 }
