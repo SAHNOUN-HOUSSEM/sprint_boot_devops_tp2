@@ -1,6 +1,6 @@
 pipeline{
 
-	agent {label 'Docker'}
+    agent any
 
 
     tools {
@@ -13,12 +13,11 @@ pipeline{
 
 	stages {
 	    
-	    stage('gitclone') {
-
-			steps {
-				git 'https://github.com/SAHNOUN-HOUSSEM/sprint_boot_devops_tp2.git'
-			}
-		}
+	    stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('Build Application') {
             steps {
