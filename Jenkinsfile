@@ -44,7 +44,7 @@ pipeline {
                     bat "docker tag ${DOCKER_IMAGE}:0 ${DOCKER_IMAGE}:latest"
                 }
             }
-        }
+        } 
         
         stage('Push to Docker Hub') {
             steps {
