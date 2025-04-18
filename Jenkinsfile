@@ -6,7 +6,6 @@ pipeline {
         DOCKER_HUB_CREDS = credentials('1')
         // Update with your actual Docker Hub username and app name
         DOCKER_IMAGE = "sahnounhoussem0501/devops_TP2"
-        DOCKER_TAG = "${env.BUILD_NUMBER}"
     }
 
     tools {
@@ -41,8 +40,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                    bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                    bat "docker build -t ${DOCKER_IMAGE}:0 ."
+                    bat "docker tag ${DOCKER_IMAGE}:0 ${DOCKER_IMAGE}:latest"
                 }
             }
         }
@@ -51,7 +50,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     bat "docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%"
-                    bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    bat "docker push ${DOCKER_IMAGE}:0"
                     bat "docker push ${DOCKER_IMAGE}:latest"
                     bat "docker logout"
                 }
@@ -61,7 +60,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 cleanWs()
-                bat "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || exit 0"
+                bat "docker rmi ${DOCKER_IMAGE}:0 || exit 0"
                 bat "docker rmi ${DOCKER_IMAGE}:latest || exit 0"
             }
         }
