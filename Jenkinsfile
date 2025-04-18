@@ -2,8 +2,11 @@ pipeline {
     agent any
     
     environment {
+        // Make sure this matches exactly with the ID you created in Jenkins
         DOCKER_HUB_CREDS = credentials('1')
-        DOCKER_IMAGE = "sahnounhoussem0501/your-app-name"
+        // Update with your actual Docker Hub username and app name
+        DOCKER_IMAGE = "sahnounhoussem0501/devops_TP2"
+        DOCKER_TAG = "${env.BUILD_NUMBER}"
     }
 
     tools {
@@ -19,17 +22,18 @@ pipeline {
         
         stage('Build Application') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                // Use bat for Windows commands instead of sh
+                bat 'mvn clean package -DskipTests'
             }
         }
         
         stage('Run Tests') {
             steps {
-                sh 'mvn test'
+                bat 'mvn test'
             }
             post {
                 always {
-                    junit '**/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -37,25 +41,19 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_IMAGE}:1")
-                    // Also tag as latest
-                    docker.build("${DOCKER_IMAGE}:latest")
+                    bat "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    bat "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
                 }
             }
         }
         
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    // Login to Docker Hub
-                    sh "echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin"
-                    
-                    // Push both tags
-                    sh "docker push ${DOCKER_IMAGE}:1"
-                    sh "docker push ${DOCKER_IMAGE}:latest"
-                    
-                    // Logout for security
-                    sh "docker logout"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    bat "docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%"
+                    bat "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    bat "docker push ${DOCKER_IMAGE}:latest"
+                    bat "docker logout"
                 }
             }
         }
@@ -63,6 +61,8 @@ pipeline {
         stage('Cleanup') {
             steps {
                 cleanWs()
+                bat "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG} || exit 0"
+                bat "docker rmi ${DOCKER_IMAGE}:latest || exit 0"
             }
         }
     }
