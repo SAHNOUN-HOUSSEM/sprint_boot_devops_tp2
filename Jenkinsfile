@@ -2,9 +2,13 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_HUB_CREDS = credentials('1')
-        DOCKER_IMAGE = "sahnounhoussem0501/devops_tp2"
+        DOCKER_HUB_CREDS = credentials('dockerhub-credentials')
+        DOCKER_IMAGE = "yourdockerhubusername/your-app-name"
         DOCKER_TAG = "${env.BUILD_NUMBER}"
+    }
+
+    tools {
+        maven 'Maven'
     }
     
     stages {
@@ -56,12 +60,11 @@ pipeline {
                 }
             }
         }
-    }
-    
-    post {
-        always {
-            // Clean up workspace
-            cleanWs()
+        
+        stage('Cleanup') {
+            steps {
+                cleanWs()
+            }
         }
     }
 }
