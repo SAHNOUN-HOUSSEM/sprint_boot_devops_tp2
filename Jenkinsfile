@@ -40,11 +40,13 @@ pipeline{
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t devops_tp2:0 ."
-                    sh "docker tag devops_tp2:0 devops_tp2:latest"
+                    def imageName = "sahnounhoussem0501/devops_tp2"
+                    sh "docker build -t ${imageName}:0 ."
+                    sh "docker tag ${imageName}:0 ${imageName}:latest"
                 }
             }
-        } 
+        }
+ 
 
 		stage('Login') {
 
